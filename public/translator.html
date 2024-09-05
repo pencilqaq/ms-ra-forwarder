@@ -74,9 +74,9 @@
             </div>
           </div>
           <div class="row col-sm  w-50">
-            <div class="voiceStyle">
-              <label for="voiceStyle" class="form-label">讲话风格</label>
-              <select name="voiceStyle" class="form-select">
+            <div class="styleName">
+              <label for="styleName" class="form-label">讲话风格：</label>
+              <select name="styleName" class="form-select">
                 <option selected value="normal">默认</option>
                 <option value="affectionate">多情</option>
                 <option value="angry">愤怒</option>
@@ -104,9 +104,9 @@
                 <p>每个角色支持的讲话风格不同详见<a href="https://learn.microsoft.com/zh-cn/azure/ai-services/speech-service/language-support?tabs=tts#voice-styles-and-roles"></a></p>
               </div>
             </div>
-            <div class="voiceStyledegree">
-              <label for="voiceStyledegree" class="form-lable">风格强度</label>
-              <input type="number" name="voiceStyledegree" class="form-control" value="1">
+            <div class="styleDegree">
+              <label for="styleDegree" class="form-lable">风格强度：</label>
+              <input type="number" name="styleDegree" class="form-control" value="1">
               <div class="form-text">
                 <p>接受值的范围：0.01 到 2 (含 2)。</p>
               </div>
@@ -202,27 +202,33 @@
       document.getElementsByName('name')[0].value = '大声朗读（' + voice + '）';
     }
 
-    function createSSML(text, voiceName) {
+    function createSSML(text, voiceName,styleName,styleDegree) {
       text = text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('\'', '&apos;').replaceAll('"', '&quot;');
       let ssml = '\
         <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">\
           <voice name="'+ voiceName + '">\
+            <mstts:express-as style="'+ styleName + '" styledegree="' + styleDegree +'">\
               <prosody rate="0%" pitch="0%">\
                   '+ text + '\
               </prosody >\
+            </mstts:express-as>\
           </voice >\
         </speak > '
-
+        console.log(ssml);
       return ssml;
     }
 
     function preview() {
       let headers = { 'Content-Type': 'text/plain' };
       let voiceName = document.getElementsByName('voiceName')[0].value;
+      let styleName = document.getElementsByName('styleName')[0].value;
+      let styleDegree = document.getElementsByName('styleDegree')[0].value;
+      console.log(styleName);
+      console.log(styleDegree);
       let voiceFormat = document.getElementsByName('voiceFormat')[0].value;
       let token = document.getElementsByName('token')[0].value;
       let previewText = document.getElementsByName('previewText')[0].value;
-      let ssml = createSSML(previewText, voiceName)
+      let ssml = createSSML(previewText, voiceName,styleName,styleDegree)
       if (token) {
         headers['Authorization'] = 'Bearer ' + token;
       }
@@ -263,8 +269,9 @@
     function createLegadoUrl() {
       let name = document.getElementsByName('name')[0].value;
       let voiceName = document.getElementsByName('voiceName')[0].value;
-      let styleName = document.getElementsByName('voiceStyle')[0].value;
-      let styleDegree = document.getElementsByName('voiceStyledegree')[0].value;
+      let styleName = document.getElementsByName('styleName')[0].value;
+      let styleDegree = document.getElementsByName('styleDegree')[0].value;
+      console.debug(styleDegree ,styleName)
       let voiceFormat = document.getElementsByName('voiceFormat')[0].value;
       let token = document.getElementsByName('token')[0].value;
       let previewText = document.getElementsByName('previewText')[0].value;
