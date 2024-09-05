@@ -31,7 +31,7 @@ jobs:
       run: echo DATE_TAG=$(date +%y%m%d%H%M%S) >> $GITHUB_ENV
       
     - name: Build and push docker image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v4
       with:
         push: true
         platforms: |
