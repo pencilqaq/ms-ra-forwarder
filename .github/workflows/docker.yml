@@ -6,23 +6,24 @@ on:
     branches: [ master ]
 
 env: 
-  DOCKER_REPOSITORY: huaii/ms-ra-forwarder
+  DOCKER_REPOSITORY: pencilqaq/ms-ra-forwarder
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.repository == 'pencilqaq/ms-ra-forwarder'
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
     
     - name: Docker setup QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v1.2.0
       
     - name: Docker setup Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v1.6.0
       
     - name: Docker login
-      uses: docker/login-action@v3
+      uses: docker/login-action@v1.13.0
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -31,11 +32,10 @@ jobs:
       run: echo DATE_TAG=$(date +%y%m%d%H%M%S) >> $GITHUB_ENV
       
     - name: Build and push docker image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v2.9.0
       with:
         push: true
         platforms: |
-          luinux/aarch64
           linux/amd64
           linux/arm/v7
           linux/arm64/v8
