@@ -10,6 +10,7 @@ app.use(express.static('public'))
 
 app.get('/api/legado', require('./api/legado'))
 app.post('/api/ra', require('./api/ra'))
+app.post('/api/translator', require('./api/translator'))
 app.listen(port, () => {
   console.info(`应用正在监听 ${port} 端口`)
 })
