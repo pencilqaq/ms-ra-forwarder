@@ -1,10 +1,11 @@
 import { Request, Response } from 'express'
 import { retry } from '../retry'
-import { service, FORMAT_CONTENT_TYPE } from '../service/translator'
+import { service, FORMAT_CONTENT_TYPE, SERVER_AREA_LIST } from '../service/translator'
 
 module.exports = async (request: Request, response: Response) => {
   console.debug(`请求正文：${request.body}`)
   let token = process.env.TOKEN
+  let server = process.env.SERVER
   if (token) {
     let authorization = request.headers['authorization']
     if (authorization != `Bearer ${token}`) {
@@ -12,6 +13,11 @@ module.exports = async (request: Request, response: Response) => {
       response.status(401).json('无效的TOKEN')
       return
     }
+  }
+  if (SERVER_AREA_LIST.indexOf(server) == -1 && server != '') {  
+    console.error('无效的服务器区域')
+    response.status(400).json('无效的服务器区域')
+    return
   }
   try {
     let ssml = request.body
@@ -24,7 +30,7 @@ module.exports = async (request: Request, response: Response) => {
     }
     let result = await retry(
       async () => {
-        let result = await service.convert(ssml, format as string)
+        let result = await service.convert(ssml, format as string, server)
         return result
       },
       3,

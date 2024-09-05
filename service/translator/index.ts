@@ -33,6 +33,39 @@ export const FORMAT_CONTENT_TYPE = new Map([
   ['ogg-48khz-16bit-mono-opus', 'audio/ogg; codecs=opus; rate=48000'],
 ])
 
+export const SERVER_AREA_LIST = [
+  'southafricanorth',
+  'eastasia',
+  'southeastasia',
+  'australiaeast',
+  'centralindia',
+  'japaneast',
+  'japanwest',
+  'koreacentral',
+  'canadacentral',
+  'northeurope',
+  'westeurope',
+  '	francecentral',
+  'germanywestcentral',
+  'norwayeast',
+  'swedencentral',
+  'switzerlandnorth',
+  '	switzerlandwest',
+  'uksouth',
+  'uaenorth',
+  'brazilsouth',
+  'qatarcentral',
+  'centralus',
+  'eastus',
+  'eastus2',
+  'northcentralus',
+  'southcentralus',
+  'westcentralus',
+  'westus',
+  'westus2',
+  'westus3',
+]
+
 export const endpoint =
   'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
 
@@ -137,7 +170,7 @@ export class Service {
     )
     return result
   }
-  public async convert(ssml, format) {
+  public async convert(ssml, format, serverArea?:string) {
     // 获取当前时间
     const currentTime = Date.now()
     // 检查是否需要重新获取 s 和 t
@@ -160,7 +193,7 @@ export class Service {
     // 更新最后执行时间
     this.lastExecutionTime = Date.now()
     let result = await this.getAudio(
-      Object.values(this.serverToken)[0].toString(),
+      serverArea?serverArea:Object.values(this.serverToken)[0].toString(),
       Object.values(this.serverToken)[1].toString(),
       ssml,
       format

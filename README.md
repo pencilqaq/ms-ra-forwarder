@@ -2,36 +2,38 @@
 
 请参考下列部署方式。
 
-### 部署到 Vercel
+### 部署到 Vercel *（推荐）*
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwxxxcxx%2Fms-ra-forwarder&env=TOKEN&envDescription=%E8%AE%BF%E9%97%AE%E4%BB%A4%E7%89%8C&project-name=ms-ra-forwarder&repository-name=ms-ra-forwarder)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fpencilqaq%2Fms-ra-forwarder&env=TOKEN&envDescription=%E8%AE%BF%E9%97%AE%E4%BB%A4%E7%89%8C&project-name=ms-ra-forwarder&repository-name=ms-ra-forwarder)
 
 ~~请先 Fork 一份代码然后部署到自己的 Vercel 中 。参考 [演示视频](https://www.youtube.com/watch?v=vRC6umZp8hI)。~~
 
 
-### 部署到 Railway
+### 部署到 Railway *（不推荐）*
 
 Railway 增加了每个月500小时的限制，而且不会自动停机，所以每个月会有一段时间无法是使用。有条件的还是使用docker部署吧。
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/p8RU3T?referralCode=-hqLZp)
 
-### 部署到 Heroku
+### 部署到 Heroku *（不推荐）*
 
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 
-### Docker（推荐）
+### Docker *（推荐）*
 
 需要安装 docker。
 
 ``` bash
 # 拉取镜像
-docker pull wxxxcxx/ms-ra-forwarder:latest
+docker pull huaii/ms-ra-forwarder:latest
 # 运行
-docker run --name ms-ra-forwarder -d -p 3000:3000 wxxxcxx/ms-ra-forwarder
-# or
-docker run --name ms-ra-forwarder -d -p 3000:3000 -e TOKEN:自定义TOKEN wxxxcxx/ms-ra-forwarder
+docker run --name ms-ra-forwarder -d -p 3000:3000 huaii/ms-ra-forwarder
+# or  自定义TOKEN
+docker run --name ms-ra-forwarder -d -p 3000:3000 -e TOKEN:自定义TOKEN huaii/ms-ra-forwarder
+# or 自定义TOKEN & SERVER
+docker run --name ms-ra-forwarder -d -p 3000:3000 -e TOKEN:自定义TOKEN -e SERVER=指定SERVER huaii/ms-ra-forwarder
 
 # 浏览器访问 http://localhost:3000
 ```
@@ -46,13 +48,14 @@ version: '3'
 services:
   ms-ra-forwarder:
     container_name: ms-ra-forwarder
-    image: wxxxcxx/ms-ra-forwarder:latest
+    image: huaii/ms-ra-forwarder:latest
     restart: unless-stopped
     ports:
       - 3000:3000
     environment:
       # 不需要可以不用设置环境变量
       - TOKEN=自定义TOKEN
+      - SERVER=指定SERVER
 ```
 
 在 `docker-compose.yml` 目录下执行 `docker compose up -d`。
@@ -65,7 +68,7 @@ services:
 
 ```bash
 # 获取代码
-git clone https://github.com/wxxxcxx/ms-ra-forwarder.git
+git clone https://github.com/pencilqaq/ms-ra-forwarder.git
 
 cd ms-ra-forwarder
 # 安装依赖
@@ -111,6 +114,10 @@ Content-Type: text/plain
 
 如果需要防止他人滥用你的部署的服务，可以在应用的环境变量中添加 `TOKEN`，然后在请求头中添加 `Authorization: Bearer <TOKEN>`访问。
 
+### 指定服务器（仅限微软翻译接口）
+
+如果你需要指定 TTS 服务器区域，可以在应用的环境变量中添加 `SERVER`，支持的区域详见[官方文档](https://learn.microsoft.com/zh-cn/azure/ai-services/speech-service/regions#speech-service)。
+
 ## 其他说明
 
 - 微软官方的 Azure TTS 服务目前拥有一定的免费额度，如果免费额度对你来说够用的话，请支持官方的服务。
@@ -123,7 +130,9 @@ Content-Type: text/plain
 
 ## 重要更改
 
-**2023-04-19：Azure 下线了演示页面的试用功能，导致 Azure 版接口无法使用了，请各位迁移到 Edge 浏览器的接口吧。** 
+**2024-09-05：添加微软翻译接口，支持指定服务器区域。（此接口支持声音风格）**
+
+2023-04-19：Azure 下线了演示页面的试用功能，导致 Azure 版接口无法使用了，请各位迁移到 Edge 浏览器的接口吧。
 
 2022-11-18：添加词典文件支持，词典文件格式参考 https://github.com/wxxxcxx/azure-tts-lexicon-cn/blob/main/lexicon.xml 。
 
