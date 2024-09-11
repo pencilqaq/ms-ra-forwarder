@@ -45,7 +45,7 @@ export const SERVER_AREA_LIST = [
   'canadacentral',
   'northeurope',
   'westeurope',
-  '	francecentral',
+  'francecentral',
   'germanywestcentral',
   'norwayeast',
   'swedencentral',
@@ -73,7 +73,6 @@ interface PromiseExecutor {
   resolve: (value?: any) => void
   reject: (reason?: any) => void
 }
-
 
 export class Service {
   private timer: NodeJS.Timer | null = null
@@ -170,7 +169,7 @@ export class Service {
     )
     return result
   }
-  public async convert(ssml, format, serverArea?:string) {
+  public async convert(ssml, format, serverArea?: string) {
     // 获取当前时间
     const currentTime = Date.now()
     // 检查是否需要重新获取 s 和 t
