@@ -19,11 +19,11 @@ module.exports = async (request: Request, response: Response) => {
       return
     }
   }
-  if (!SERVER_AREA_LIST.indexOf(server) && server != undefined) {
+  if (SERVER_AREA_LIST.indexOf(server) == -1 && server) {
     console.error('环境变量中的服务器区域无效')
     response.status(400).json('环境变量中的服务器区域无效')
     return
-  } else if (!SERVER_AREA_LIST.indexOf(server)) {
+  } else if (SERVER_AREA_LIST.indexOf(server) == -1) {
     isEnvServer = false
   }
   try {
@@ -32,19 +32,16 @@ module.exports = async (request: Request, response: Response) => {
       throw `转换参数无效`
     }
     let format = request.headers['format']
-    if (!format) {
-      throw '仅支持audio-24khz-48kbitrate-mono-mp3'
+    if (FORMAT_CONTENT_TYPE.get(format.toString()) == null) {
+      throw '音频格式无效'
     }
     let result = await retry(
       async () => {
-        let result
         if (isEnvServer) {
-          result= await service.convert(ssml, format as string, server)
+          return await service.convert(ssml, format as string, server)
         } else {
-          result= await service.convert(ssml, format as string)
+          return await service.convert(ssml, format as string)
         }
-
-        return result
       },
       3,
       (index, error) => {

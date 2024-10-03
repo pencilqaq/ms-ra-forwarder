@@ -172,7 +172,7 @@
       let code = e.code
       e.voices.forEach( e =>{
         let option = document.createElement('option')
-        option.value = e.code
+        option.value = e.voiceCode
         option.innerText = e.voiceCode + ' - ' + e.gender + ' - ' + language
         if (e.voiceCode == 'zh-CN-XiaoxiaoNeural') {
           option.selected = true;
@@ -180,41 +180,6 @@
         document.getElementsByName('voiceName')[0].append(option)
       })
     })
-/*      fetch('https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=6A5AA1D4EAFF4E9FB37E23D68491D6F4')
-      .then(response => {
-        if (response.status == 200) {
-          return response.json();
-        } else {
-          console.log(response);
-          return response.text().then(text => Promise.reject(text));
-        }
-      }).then(data => {
-        voices = data;
-        refreshVoice();
-      }).catch(reason => {
-        alert(reason);
-      });  */
-    
-
-    function refreshVoice() {
-      let voiceElelement = document.getElementsByName('voiceName')[0];
-      voiceElelement.innerHTMl = '';
-      voices.forEach(item => {
-        let option = document.createElement('option');
-        option.value = item['ShortName'];
-        option.innerText = item['FriendlyName'];
-        if (item['ShortName'] == 'zh-CN-XiaoxiaoNeural') {
-          option.selected = true;
-        }
-        voiceElelement.append(option)
-      });
-      updateConfigName();
-    }
-
-    function updateConfigName() {
-      let voice = document.getElementsByName('voiceName')[0].value;
-      document.getElementsByName('name')[0].value = '大声朗读（' + voice + '）';
-    }
 
     function createSSML(text, voiceName,styleName,styleDegree) {
       text = text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('\'', '&apos;').replaceAll('"', '&quot;');
