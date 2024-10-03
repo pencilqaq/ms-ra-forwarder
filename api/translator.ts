@@ -1,11 +1,16 @@
 import { Request, Response } from 'express'
 import { retry } from '../retry'
-import { service, FORMAT_CONTENT_TYPE, SERVER_AREA_LIST } from '../service/translator'
+import {
+  service,
+  FORMAT_CONTENT_TYPE,
+  SERVER_AREA_LIST,
+} from '../service/translator'
 
 module.exports = async (request: Request, response: Response) => {
   console.debug(`请求正文：${request.body}`)
   let token = process.env.TOKEN
   let server = process.env.SERVER
+  let isEnvServer = true
   if (token) {
     let authorization = request.headers['authorization']
     if (authorization != `Bearer ${token}`) {
@@ -14,10 +19,12 @@ module.exports = async (request: Request, response: Response) => {
       return
     }
   }
-  if (SERVER_AREA_LIST.indexOf(server) == -1 && server != '') {  
-    console.error('无效的服务器区域')
-    response.status(400).json('无效的服务器区域')
+  if (!SERVER_AREA_LIST.indexOf(server) && server != undefined) {
+    console.error('环境变量中的服务器区域无效')
+    response.status(400).json('环境变量中的服务器区域无效')
     return
+  } else if (!SERVER_AREA_LIST.indexOf(server)) {
+    isEnvServer = false
   }
   try {
     let ssml = request.body
@@ -30,7 +37,13 @@ module.exports = async (request: Request, response: Response) => {
     }
     let result = await retry(
       async () => {
-        let result = await service.convert(ssml, format as string, server)
+        let result
+        if (isEnvServer) {
+          result= await service.convert(ssml, format as string, server)
+        } else {
+          result= await service.convert(ssml, format as string)
+        }
+
         return result
       },
       3,
