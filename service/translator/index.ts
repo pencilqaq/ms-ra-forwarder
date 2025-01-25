@@ -1,7 +1,7 @@
 import { createHmac, randomUUID } from 'crypto'
 import { Buffer } from 'buffer'
 
-export const FORMAT_CONTENT_TYPE = new Map([
+export const FORMAT_CONTENT_TYPE = new Map<string, string>([
   ['raw-16khz-16bit-mono-pcm', 'audio/basic'],
   ['raw-48khz-16bit-mono-pcm', 'audio/basic'],
   ['raw-8khz-8bit-mono-mulaw', 'audio/basic'],
@@ -33,7 +33,7 @@ export const FORMAT_CONTENT_TYPE = new Map([
   ['ogg-48khz-16bit-mono-opus', 'audio/ogg; codecs=opus; rate=48000'],
 ])
 
-export const SERVER_AREA_LIST = [
+export const SERVER_AREA_LIST = new Set<string>([
   'southafricanorth',
   'eastasia',
   'southeastasia',
@@ -50,7 +50,7 @@ export const SERVER_AREA_LIST = [
   'norwayeast',
   'swedencentral',
   'switzerlandnorth',
-  '	switzerlandwest',
+  'switzerlandwest',
   'uksouth',
   'uaenorth',
   'brazilsouth',
@@ -64,30 +64,25 @@ export const SERVER_AREA_LIST = [
   'westus',
   'westus2',
   'westus3',
-]
+])
 
-export const endpoint =
-  'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
+export const endpoint = 'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
 
-interface PromiseExecutor {
-  resolve: (value?: any) => void
-  reject: (reason?: any) => void
+interface ServerToken {
+  r: string
+  t: string
 }
 
 export class Service {
   private timer: NodeJS.Timer | null = null
-  private serverToken: any | null = null
-  private lastExecutionTime = 0
+  private serverToken: ServerToken | null = null
+  private lastCacheTime: number | null = null
+  private cacheExpiresAt: number | null = null
   public getSign(url: string) {
     let formatDate = new Date().toUTCString().replace(' GMT', 'GMT')
     let endcodeUrl = encodeURIComponent(url.replace('https://', ''))
     let uuid = randomUUID().replace(/-/g, '')
-    let byte = (
-      'MSTranslatorAndroidApp' +
-      endcodeUrl +
-      formatDate +
-      uuid
-    ).toLowerCase()
+    let byte = ('MSTranslatorAndroidApp' + endcodeUrl + formatDate + uuid).toLowerCase()
     let secretKey = Buffer.from(
       'oik6PdDdMnOXemTbwvMn9de/h9lFnfBaCWbGMMZqqoSaQaqUOqjVGm5NqsmjcBI1x+sS9ugjB55HEJWRiFXYFw==',
       'base64'
@@ -95,8 +90,7 @@ export class Service {
     const hmac = createHmac('sha256', secretKey)
     hmac.update(byte)
     let signBase64 = hmac.digest('base64')
-    let sign =
-      'MSTranslatorAndroidApp::' + signBase64 + '::' + formatDate + '::' + uuid
+    let sign = 'MSTranslatorAndroidApp::' + signBase64 + '::' + formatDate + '::' + uuid
     return sign
   }
   public async httpPost(url, body, headers, resType = 'json') {
@@ -110,26 +104,19 @@ export class Service {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
-      // 根据响应类型解析数据
-      let data
+
       switch (resType) {
         case 'json':
-          data = await response.json()
-          break
+          return response.json()
         case 'text':
-          data = await response.text()
-          break
+          return response.text()
         case 'blob':
-          data = await response.blob()
-          break
+          return response.blob()
         case 'arrayBuffer':
-          data = Buffer.from(new Uint8Array(await response.arrayBuffer()))
-          break
+          return response.arrayBuffer()
         default:
           throw new Error('Unsupported response type')
       }
-
-      return data
     } catch (error) {
       console.error('Error:', error.message)
       throw error
@@ -148,11 +135,9 @@ export class Service {
       'Content-Type': 'application/json; charset=utf-8',
       'Accept-Encoding': 'gzip',
     }
-    let result
-    result = await this.httpPost(url, '', headers)
-    return result
+    return this.httpPost(url, '', headers)
   }
-  public async getAudio(s: string, t: string, ssml: string, format: string) {
+  public async getAudio(r: string, t: string, ssml: string, format: string) {
     let headers = {
       'x-forwarded-for': '13.104.54.77',
       authorization: t,
@@ -160,44 +145,24 @@ export class Service {
       'content-type': 'application/ssml+xml',
       'accept-encoding': 'gzip, deflate, br',
     }
-    let result
-    result = await this.httpPost(
-      'https://' + s + '.tts.speech.microsoft.com/cognitiveservices/v1',
+    let result = this.httpPost(
+      'https://' + r + '.tts.speech.microsoft.com/cognitiveservices/v1',
       ssml,
       headers,
       'arrayBuffer'
     )
-    return result
+    return Buffer.from(await result)
   }
   public async convert(ssml, format, serverArea?: string) {
-    // 获取当前时间
-    const currentTime = Date.now()
     // 检查是否需要重新获取 s 和 t
-    if (!this.serverToken || currentTime - this.lastExecutionTime > 60000) {
+    if (this.serverToken === null || Date.now() > this.cacheExpiresAt) {
       // 重新获取 s 和 t
+      console.debug('获取serverToken...\r')
       this.serverToken = await this.getEndpoint(endpoint)
-      console.debug('获取serverToken')
-      // 清除之前的定时器（如果有的话）
-      if (this.timer !== null) {
-        console.debug('清除定时器')
-        clearTimeout(this.timer)
-        this.timer = null
-      }
-      // 重新启动定时器，设置为60秒后重新获取 s 和 t
-      this.timer = setTimeout(() => {
-        this.serverToken = null
-        console.debug('60s未接收到转换请求，清除 serverToken')
-      }, 60000)
+      this.lastCacheTime = Date.now()
+      this.cacheExpiresAt = this.lastCacheTime + 3600000
     }
-    // 更新最后执行时间
-    this.lastExecutionTime = Date.now()
-    let result = await this.getAudio(
-      serverArea?serverArea:Object.values(this.serverToken)[0].toString(),
-      Object.values(this.serverToken)[1].toString(),
-      ssml,
-      format
-    )
-    return result
+    return this.getAudio(serverArea ?? this.serverToken.r, this.serverToken.t, ssml, format)
   }
 }
 
