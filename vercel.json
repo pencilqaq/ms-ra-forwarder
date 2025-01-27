@@ -3,9 +3,13 @@
         {
             "src": "/",
             "dest": "/public"
+        },
+        {
+            "src": "/api/translator",
+            "dest": "/api/ra"
         }
     ],
-    "env":{
+    "env": {
         "VERCEL": "true"
     }
 }
