@@ -36,11 +36,9 @@ module.exports = async (request: Request, response: Response) => {
     }
     let result = await retry(
       async () => {
-        let originalUrl = request.originalUrl
-        console.log('originalUrl:' + originalUrl)
-        console.log('request.url' + request.url + '\n' + 'request.path' + request.path)
-
-        switch (originalUrl) {
+        let requestUrl = request.url
+        console.log(`请求URL：${requestUrl}`)
+        switch (requestUrl) {
           case '/api/translator':
             return await translator.convert(
               ssml,
@@ -50,7 +48,7 @@ module.exports = async (request: Request, response: Response) => {
           case '/api/ra':
             return await service.convert(ssml, format as string)
           default:
-            throw `url错误：${originalUrl}`
+            throw `url错误：${requestUrl}`
         }
       },
       3,
