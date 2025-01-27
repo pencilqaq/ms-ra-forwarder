@@ -37,7 +37,9 @@ module.exports = async (request: Request, response: Response) => {
     let result = await retry(
       async () => {
         let originalUrl = request.originalUrl
-        console.log(originalUrl)
+        console.log('originalUrl:' + originalUrl)
+        console.log('request.url' + request.url + '\n' + 'request.path' + request.path)
+
         switch (originalUrl) {
           case '/api/translator':
             return await translator.convert(
