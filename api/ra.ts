@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { retry } from '../retry'
-import { service, FORMAT_CONTENT_TYPE } from '../service/edge'
+import { service } from '../service/edge'
+import { FORMAT_CONTENT_TYPE } from './src/constants'
 
 module.exports = async (request: Request, response: Response) => {
   console.debug(`请求正文：${request.body}`)

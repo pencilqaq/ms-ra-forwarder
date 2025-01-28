@@ -1,93 +1,23 @@
 import { createHmac, randomUUID } from 'crypto'
 import { Buffer } from 'buffer'
 
-export const FORMAT_CONTENT_TYPE = new Map([
-  ['raw-16khz-16bit-mono-pcm', 'audio/basic'],
-  ['raw-48khz-16bit-mono-pcm', 'audio/basic'],
-  ['raw-8khz-8bit-mono-mulaw', 'audio/basic'],
-  ['raw-8khz-8bit-mono-alaw', 'audio/basic'],
+export const endpoint = 'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
 
-  ['raw-16khz-16bit-mono-truesilk', 'audio/SILK'],
-  ['raw-24khz-16bit-mono-truesilk', 'audio/SILK'],
-
-  ['riff-16khz-16bit-mono-pcm', 'audio/x-wav'],
-  ['riff-24khz-16bit-mono-pcm', 'audio/x-wav'],
-  ['riff-48khz-16bit-mono-pcm', 'audio/x-wav'],
-  ['riff-8khz-8bit-mono-mulaw', 'audio/x-wav'],
-  ['riff-8khz-8bit-mono-alaw', 'audio/x-wav'],
-
-  ['audio-16khz-32kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-16khz-64kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-16khz-128kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-24khz-48kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-24khz-96kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-24khz-160kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-48khz-96kbitrate-mono-mp3', 'audio/mpeg'],
-  ['audio-48khz-192kbitrate-mono-mp3', 'audio/mpeg'],
-
-  ['webm-16khz-16bit-mono-opus', 'audio/webm; codec=opus'],
-  ['webm-24khz-16bit-mono-opus', 'audio/webm; codec=opus'],
-
-  ['ogg-16khz-16bit-mono-opus', 'audio/ogg; codecs=opus; rate=16000'],
-  ['ogg-24khz-16bit-mono-opus', 'audio/ogg; codecs=opus; rate=24000'],
-  ['ogg-48khz-16bit-mono-opus', 'audio/ogg; codecs=opus; rate=48000'],
-])
-
-export const SERVER_AREA_LIST = [
-  'southafricanorth',
-  'eastasia',
-  'southeastasia',
-  'australiaeast',
-  'centralindia',
-  'japaneast',
-  'japanwest',
-  'koreacentral',
-  'canadacentral',
-  'northeurope',
-  'westeurope',
-  'francecentral',
-  'germanywestcentral',
-  'norwayeast',
-  'swedencentral',
-  'switzerlandnorth',
-  '	switzerlandwest',
-  'uksouth',
-  'uaenorth',
-  'brazilsouth',
-  'qatarcentral',
-  'centralus',
-  'eastus',
-  'eastus2',
-  'northcentralus',
-  'southcentralus',
-  'westcentralus',
-  'westus',
-  'westus2',
-  'westus3',
-]
-
-export const endpoint =
-  'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
-
-interface PromiseExecutor {
-  resolve: (value?: any) => void
-  reject: (reason?: any) => void
+interface cacheEndpoint {
+  serverToken: { r: string; t: string } | null
+  unvaildTime: number | null
 }
 
 export class Service {
-  private timer: NodeJS.Timer | null = null
-  private serverToken: any | null = null
-  private lastExecutionTime = 0
+  private cacheEndpoint: cacheEndpoint = {
+    serverToken: null,
+    unvaildTime: null,
+  }
   public getSign(url: string) {
     let formatDate = new Date().toUTCString().replace(' GMT', 'GMT')
     let endcodeUrl = encodeURIComponent(url.replace('https://', ''))
     let uuid = randomUUID().replace(/-/g, '')
-    let byte = (
-      'MSTranslatorAndroidApp' +
-      endcodeUrl +
-      formatDate +
-      uuid
-    ).toLowerCase()
+    let byte = ('MSTranslatorAndroidApp' + endcodeUrl + formatDate + uuid).toLowerCase()
     let secretKey = Buffer.from(
       'oik6PdDdMnOXemTbwvMn9de/h9lFnfBaCWbGMMZqqoSaQaqUOqjVGm5NqsmjcBI1x+sS9ugjB55HEJWRiFXYFw==',
       'base64'
@@ -95,8 +25,7 @@ export class Service {
     const hmac = createHmac('sha256', secretKey)
     hmac.update(byte)
     let signBase64 = hmac.digest('base64')
-    let sign =
-      'MSTranslatorAndroidApp::' + signBase64 + '::' + formatDate + '::' + uuid
+    let sign = 'MSTranslatorAndroidApp::' + signBase64 + '::' + formatDate + '::' + uuid
     return sign
   }
   public async httpPost(url, body, headers, resType = 'json') {
@@ -123,7 +52,7 @@ export class Service {
           data = await response.blob()
           break
         case 'arrayBuffer':
-          data = Buffer.from(new Uint8Array(await response.arrayBuffer()))
+          data = Buffer.from(await response.arrayBuffer())
           break
         default:
           throw new Error('Unsupported response type')
@@ -148,11 +77,9 @@ export class Service {
       'Content-Type': 'application/json; charset=utf-8',
       'Accept-Encoding': 'gzip',
     }
-    let result
-    result = await this.httpPost(url, '', headers)
-    return result
+    return this.httpPost(url, '', headers)
   }
-  public async getAudio(s: string, t: string, ssml: string, format: string) {
+  public async getAudio(r: string, t: string, ssml: string, format: string) {
     let headers = {
       'x-forwarded-for': '13.104.54.77',
       authorization: t,
@@ -162,7 +89,7 @@ export class Service {
     }
     let result
     result = await this.httpPost(
-      'https://' + s + '.tts.speech.microsoft.com/cognitiveservices/v1',
+      'https://' + r + '.tts.speech.microsoft.com/cognitiveservices/v1',
       ssml,
       headers,
       'arrayBuffer'
@@ -170,34 +97,17 @@ export class Service {
     return result
   }
   public async convert(ssml, format, serverArea?: string) {
-    // 获取当前时间
-    const currentTime = Date.now()
-    // 检查是否需要重新获取 s 和 t
-    if (!this.serverToken || currentTime - this.lastExecutionTime > 60000) {
-      // 重新获取 s 和 t
-      this.serverToken = await this.getEndpoint(endpoint)
+    if (Date.now() > this.cacheEndpoint.unvaildTime) {
+      this.cacheEndpoint.serverToken = await this.getEndpoint(endpoint)
       console.debug('获取serverToken')
-      // 清除之前的定时器（如果有的话）
-      if (this.timer !== null) {
-        console.debug('清除定时器')
-        clearTimeout(this.timer)
-        this.timer = null
-      }
-      // 重新启动定时器，设置为60秒后重新获取 s 和 t
-      this.timer = setTimeout(() => {
-        this.serverToken = null
-        console.debug('60s未接收到转换请求，清除 serverToken')
-      }, 60000)
     }
-    // 更新最后执行时间
-    this.lastExecutionTime = Date.now()
-    let result = await this.getAudio(
-      serverArea?serverArea:Object.values(this.serverToken)[0].toString(),
-      Object.values(this.serverToken)[1].toString(),
+    this.cacheEndpoint.unvaildTime = Date.now() + 3600000
+    return this.getAudio(
+      serverArea ? serverArea : this.cacheEndpoint.serverToken.r,
+      this.cacheEndpoint.serverToken.t,
       ssml,
       format
     )
-    return result
   }
 }
 

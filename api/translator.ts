@@ -1,16 +1,13 @@
 import { Request, Response } from 'express'
 import { retry } from '../retry'
-import {
-  service,
-  FORMAT_CONTENT_TYPE,
-  SERVER_AREA_LIST,
-} from '../service/translator'
+import { service } from '../service/translator'
+import { FORMAT_CONTENT_TYPE, SERVER_AREA } from './src/constants'
 
 module.exports = async (request: Request, response: Response) => {
   console.debug(`请求正文：${request.body}`)
   let token = process.env.TOKEN
   let server = process.env.SERVER
-  let isEnvServer = true
+  let validEnvServer = true
   if (token) {
     let authorization = request.headers['authorization']
     if (authorization != `Bearer ${token}`) {
@@ -19,12 +16,9 @@ module.exports = async (request: Request, response: Response) => {
       return
     }
   }
-  if (!SERVER_AREA_LIST.indexOf(server) && server != undefined) {
-    console.error('环境变量中的服务器区域无效')
-    response.status(400).json('环境变量中的服务器区域无效')
-    return
-  } else if (!SERVER_AREA_LIST.indexOf(server)) {
-    isEnvServer = false
+  if (!(server && SERVER_AREA.has(server))) {
+    console.error('无效的SERVER')
+    validEnvServer = false
   }
   try {
     let ssml = request.body
@@ -32,19 +26,16 @@ module.exports = async (request: Request, response: Response) => {
       throw `转换参数无效`
     }
     let format = request.headers['format']
-    if (!format) {
-      throw '仅支持audio-24khz-48kbitrate-mono-mp3'
+    if (FORMAT_CONTENT_TYPE.get(format.toString()) == null) {
+      throw '音频格式无效'
     }
     let result = await retry(
       async () => {
-        let result
-        if (isEnvServer) {
-          result= await service.convert(ssml, format as string, server)
+        if (validEnvServer) {
+          return service.convert(ssml, format as string, server)
         } else {
-          result= await service.convert(ssml, format as string)
+          return service.convert(ssml, format as string)
         }
-
-        return result
       },
       3,
       (index, error) => {
@@ -53,9 +44,7 @@ module.exports = async (request: Request, response: Response) => {
       '服务器多次尝试后转换失败'
     )
     response.sendDate = true
-    response
-      .status(200)
-      .setHeader('Content-Type', FORMAT_CONTENT_TYPE.get(format.toString()))
+    response.status(200).setHeader('Content-Type', FORMAT_CONTENT_TYPE.get(format.toString()))
     response.end(result)
   } catch (error) {
     console.error(`发生错误, ${error.message}`)

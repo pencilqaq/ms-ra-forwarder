@@ -1,3 +1,7 @@
+# 重要通知
+Edge接口添加了新的参数`ec-MS-GEC`和`ec-MS-GEC-Version`这两个参数都是动态的，国内ip在没有这两个参数的情况下会被拒绝访问。
+在较为简便的解决方法问世之前不会修复这个问题。
+
 ## 部署
 
 请参考下列部署方式。
@@ -8,17 +12,6 @@
 
 ~~请先 Fork 一份代码然后部署到自己的 Vercel 中 。参考 [演示视频](https://www.youtube.com/watch?v=vRC6umZp8hI)。~~
 
-
-### 部署到 Railway *（不推荐）*
-
-Railway 增加了每个月500小时的限制，而且不会自动停机，所以每个月会有一段时间无法是使用。有条件的还是使用docker部署吧。
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/p8RU3T?referralCode=-hqLZp)
-
-### 部署到 Heroku *（不推荐）*
-
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 
 ### Docker *（推荐）*
@@ -77,6 +70,18 @@ npm install
 npm run start
 ```
 
+
+### 部署到 Railway *（不推荐）*
+
+Railway 增加了每个月500小时的限制，而且不会自动停机，所以每个月会有一段时间无法是使用。有条件的还是使用docker部署吧。
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.app/new/template/p8RU3T?referralCode=-hqLZp)
+
+### 部署到 Heroku *（不推荐）*
+
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
 ## 使用
 
 ### 导入到阅读（legado）
@@ -85,7 +90,7 @@ npm run start
 
 ### 手动调用
 
-接口地址为`api/ra`。格式为：
+接口地址为 `api/ra` 和 `api/translator`。格式为：
 ```
 POST /api/ra
 FORMAT: audio-16khz-128kbitrate-mono-mp3
@@ -99,7 +104,7 @@ Content-Type: text/plain
 ```
 
 #### 定制发音和音色
-请求的正文为 ssml 格式，支持定制发音人和讲话风格（目前仅 Azure 版本支持定制讲话风格），下面是相关的示例和文档：
+请求的正文为 ssml 格式，支持定制发音人和讲话风格（目前仅 `微软翻译（即api/translator）`) 版本支持定制讲话风格），下面是相关的示例和文档：
 
 [文本转语音](https://azure.microsoft.com/zh-cn/services/cognitive-services/text-to-speech/#overview)
 
@@ -108,7 +113,7 @@ Content-Type: text/plain
 
 
 #### 音频格式
-默认的音频格式为 webm ，如果需要获取为其他格式的音频请修改请求头的 `FORMAT`（可用的选项可以在 [ra/index.ts](ra/index.ts#L5) 中查看）。
+默认的音频格式为 webm ，如果需要获取为其他格式的音频请修改请求头的 `FORMAT`（可用的选项可以在 [api/src/constants.ts](api/src/constants.ts#L1) 中查看）。
 
 ### 限制访问
 
@@ -130,7 +135,7 @@ Content-Type: text/plain
 
 ## 重要更改
 
-**2024-09-05：添加微软翻译接口，支持指定服务器区域。（此接口支持声音风格）**
+**2024-09-05：添加微软翻译接口，支持指定服务器区域。（此接口几乎支持AzureTTS的全部功能）**
 
 2023-04-19：Azure 下线了演示页面的试用功能，导致 Azure 版接口无法使用了，请各位迁移到 Edge 浏览器的接口吧。
 

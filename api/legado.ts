@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { FORMAT_CONTENT_TYPE } from '../service/edge'
+import { FORMAT_CONTENT_TYPE } from './src/constants'
 module.exports = async (request: Request, response: Response) => {
   console.log('Import url: ' + request.url)
   let api = request.query['api']
