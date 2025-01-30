@@ -98,10 +98,17 @@ export class Service {
   }
   public async convert(ssml, format, serverArea?: string) {
     if (Date.now() > this.cacheEndpoint.unvaildTime) {
+      let StartAt = Date.now()
       this.cacheEndpoint.serverToken = await this.getEndpoint(endpoint)
-      console.debug('获取serverToken')
+      let EndAt = Date.now()
+      let cost = EndAt - StartAt
+      this.cacheEndpoint.unvaildTime = EndAt + 3600000 - cost
+      console.debug(
+        `获取serverToken\n耗时: ${cost}\n预计失效时间: ${new Date(
+          this.cacheEndpoint.unvaildTime
+        ).toString()}`
+      )
     }
-    this.cacheEndpoint.unvaildTime = Date.now() + 3600000
     return this.getAudio(
       serverArea ? serverArea : this.cacheEndpoint.serverToken.r,
       this.cacheEndpoint.serverToken.t,
