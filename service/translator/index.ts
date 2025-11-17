@@ -1,31 +1,42 @@
-import { createHmac, randomUUID } from 'crypto'
 import { Buffer } from 'buffer'
+import { createHmac, randomUUID } from 'crypto'
 
-export const endpoint = 'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
+export const endpoint =
+  'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0'
 
 interface cacheEndpoint {
   serverToken: { r: string; t: string } | null
-  unvaildTime: number | null
+  invalidTime: number | null
 }
 
 export class Service {
   private cacheEndpoint: cacheEndpoint = {
     serverToken: null,
-    unvaildTime: null,
+    invalidTime: null,
   }
+
+  private refreshPromise: Promise<void> | null = null
+
   public getSign(url: string) {
     let formatDate = new Date().toUTCString().replace(' GMT', 'GMT')
     let endcodeUrl = encodeURIComponent(url.replace('https://', ''))
     let uuid = randomUUID().replace(/-/g, '')
-    let byte = ('MSTranslatorAndroidApp' + endcodeUrl + formatDate + uuid).toLowerCase()
+    let byte = (
+      'MSTranslatorAndroidApp' +
+      endcodeUrl +
+      formatDate +
+      uuid
+    ).toLowerCase()
     let secretKey = Buffer.from(
       'oik6PdDdMnOXemTbwvMn9de/h9lFnfBaCWbGMMZqqoSaQaqUOqjVGm5NqsmjcBI1x+sS9ugjB55HEJWRiFXYFw==',
       'base64'
-    )
+    ) as Uint8Array
+
     const hmac = createHmac('sha256', secretKey)
     hmac.update(byte)
     let signBase64 = hmac.digest('base64')
-    let sign = 'MSTranslatorAndroidApp::' + signBase64 + '::' + formatDate + '::' + uuid
+    let sign =
+      'MSTranslatorAndroidApp::' + signBase64 + '::' + formatDate + '::' + uuid
     return sign
   }
   public async httpPost(url, body, headers, resType = 'json') {
@@ -96,19 +107,30 @@ export class Service {
     )
     return result
   }
-  public async convert(ssml, format, serverArea?: string) {
-    if (Date.now() > this.cacheEndpoint.unvaildTime) {
-      let StartAt = Date.now()
-      this.cacheEndpoint.serverToken = await this.getEndpoint(endpoint)
-      let EndAt = Date.now()
-      let cost = EndAt - StartAt
-      this.cacheEndpoint.unvaildTime = EndAt + 3600000 - cost
-      console.debug(
-        `获取serverToken\n耗时: ${cost}\n预计失效时间: ${new Date(
-          this.cacheEndpoint.unvaildTime
-        ).toString()}`
-      )
+
+  private async refreshToken() {
+    let StartAt = Date.now()
+    this.cacheEndpoint.serverToken = await this.getEndpoint(endpoint)
+    let EndAt = Date.now()
+    let cost = EndAt - StartAt
+    this.cacheEndpoint.invalidTime = EndAt + 3600000 - cost
+    console.debug(
+      `获取serverToken\n耗时: ${cost}\n预计失效时间: ${new Date(
+        this.cacheEndpoint.invalidTime
+      ).toString()}`
+    )
+  }
+
+  public async convert(ssml: string, format: string, serverArea?: string) {
+    if (Date.now() > this.cacheEndpoint.invalidTime) {
+      // 使用锁机制防止并发刷新
+      if (!this.refreshPromise) {
+        this.refreshPromise = this.refreshToken()
+      }
+      await this.refreshPromise
+      this.refreshPromise = null
     }
+
     return this.getAudio(
       serverArea ? serverArea : this.cacheEndpoint.serverToken.r,
       this.cacheEndpoint.serverToken.t,

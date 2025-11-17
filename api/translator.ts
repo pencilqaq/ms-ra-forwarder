@@ -17,7 +17,7 @@ module.exports = async (request: Request, response: Response) => {
     }
   }
   if (!(server && SERVER_AREA.has(server))) {
-    console.error('无效的SERVER')
+    console.warn('未指定SERVER或指定了无效的SERVER')
     validEnvServer = false
   }
   try {
@@ -44,7 +44,9 @@ module.exports = async (request: Request, response: Response) => {
       '服务器多次尝试后转换失败'
     )
     response.sendDate = true
-    response.status(200).setHeader('Content-Type', FORMAT_CONTENT_TYPE.get(format.toString()))
+    response
+      .status(200)
+      .setHeader('Content-Type', FORMAT_CONTENT_TYPE.get(format.toString()))
     response.end(result)
   } catch (error) {
     console.error(`发生错误, ${error.message}`)

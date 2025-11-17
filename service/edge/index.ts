@@ -87,12 +87,15 @@ export class Service {
           let content = data.slice(contentIndex)
 
           console.debug(
-            `收到音频片段：${requestId} Length: ${content.length}\n${headers}`,
+            `收到音频片段：${requestId} Length: ${content.length}\n${headers}`
           )
 
           let buffer = this.bufferMap.get(requestId)
           if (buffer) {
-            buffer = Buffer.concat([buffer, content])
+            buffer = Buffer.concat([
+              buffer as Uint8Array,
+              content as Uint8Array,
+            ])
             this.bufferMap.set(requestId, buffer)
           } else {
             console.debug(`请求已被丢弃：${requestId}`)
